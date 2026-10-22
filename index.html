@@ -5,385 +5,444 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kalkulator Zakat Mal Pribadi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
 <style>
-/* Tata letak desktop: form di kiri, panel hasil menempel di kanan. Satu kolom di layar sempit. */
+/*
+  Konsep: "timbangan". Kiri = panel hasil dengan kolom harta yang naik menuju garis nisab emas.
+  Kanan = daftar isian ringkas. Satu momen gerak: saat harta melewati nisab, garis nisab berdenyut sekali.
+  Warna: hijau zamrud untuk harta, emas untuk nisab, plum untuk pengurang.
+*/
 :root{
-  --bg:#F3F6F4; --surface:#FFFFFF; --sunk:#E8EEEA; --line:#D3DDD7;
-  --fg:#13201B; --muted:#56665E;
-  --accent:#0E6A4E; --accent-ink:#FFFFFF; --accent-soft:#DCEFE6;
-  --gold:#9C7A22; --gold-soft:#F4EBD2;
-  --warn:#A2560B; --warn-soft:#FBEBD8;
-  --font-body:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --font-num:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
-  --r:10px;
+  --paper:#EDF1EE; --card:#FFFFFF; --well:#E3E9E5; --line:#D3DDD8;
+  --ink:#12241F; --soft:#5A6A64;
+  --emerald:#0A6A50; --emerald-soft:#DBECE4; --fill-low:#8DB4A5;
+  --gold:#B07F12; --gold-soft:#F4E7C6;
+  --minus:#94385A; --minus-soft:#F5E1E8;
+  --display:"Bricolage Grotesque","Plus Jakarta Sans",system-ui,sans-serif;
+  --body:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){:root{
-  --bg:#0E1412; --surface:#151D1A; --sunk:#1B2521; --line:#2A3631;
-  --fg:#E4ECE7; --muted:#97A79F;
-  --accent:#4DBE93; --accent-ink:#06130E; --accent-soft:#163429;
-  --gold:#D9B65C; --gold-soft:#2E2715;
-  --warn:#E9A15A; --warn-soft:#33230F; color-scheme:dark;}}
+  --paper:#0C1614; --card:#13201D; --well:#1B2A26; --line:#26372F;
+  --ink:#E4EEE9; --soft:#93A59E;
+  --emerald:#46C49B; --emerald-soft:#12362B; --fill-low:#2E5A4C;
+  --gold:#E3B54C; --gold-soft:#2F2711;
+  --minus:#E583A3; --minus-soft:#3A1C27;
+  color-scheme:dark;}}
 
 *{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.55;padding:32px 24px 56px}
-.wrap{max-width:1180px;margin:0 auto}
-h1,h2,h3{margin:0;text-wrap:balance}
-.num{font-family:var(--font-num);font-variant-numeric:tabular-nums}
-a{color:var(--accent)}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1160px;margin:0 auto;padding:36px 28px 64px}
+:focus-visible{outline:2px solid var(--emerald);outline-offset:2px;border-radius:6px}
 [hidden]{display:none!important}
+a{color:var(--emerald)}
+.tnum{font-variant-numeric:tabular-nums}
 
-header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between;margin-bottom:24px}
-.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
-h1{font-size:clamp(28px,3.6vw,38px);font-weight:800;letter-spacing:-.02em;line-height:1.1;margin-top:4px}
-.lede{color:var(--muted);max-width:62ch;margin:8px 0 0}
-.head-actions{display:flex;gap:8px;flex-wrap:wrap}
+/* Header */
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px 24px;flex-wrap:wrap;margin-bottom:28px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(32px,4.2vw,48px);line-height:1;letter-spacing:-.03em;margin:0}
+.lede{margin:10px 0 0;color:var(--soft);max-width:54ch}
+.ghost{font:600 14px/1 var(--body);padding:10px 14px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.ghost:hover{background:var(--card)}
+.head-btns{display:flex;gap:8px}
 
-.grid{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:24px;align-items:start}
-@media (max-width:920px){.grid{grid-template-columns:minmax(0,1fr)}}
-.steps{display:flex;flex-direction:column;gap:16px;min-width:0}
-.step{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px;display:flex;flex-direction:column;gap:16px}
-.step-head{display:flex;gap:12px;align-items:baseline}
-.step-n{font-family:var(--font-num);font-size:13px;color:var(--accent);font-weight:600;flex:none}
-.step-head h2{font-size:18px;font-weight:700}
-.step-head p{margin:2px 0 0;color:var(--muted);font-size:14px;max-width:70ch}
+.layout{display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
 
-.cat{display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--line);padding-top:16px}
-.cat:first-of-type{border-top:0;padding-top:0}
-.cat-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
-.cat-head h3{font-size:15px;font-weight:700}
-.cat-head .sub{font-size:13px;color:var(--muted)}
-.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
-.field{display:flex;flex-direction:column;gap:4px;min-width:0}
-.field label{font-size:13.5px;font-weight:600}
-.hint{font-size:12.5px;color:var(--muted);line-height:1.45}
-.hint em{font-style:normal;color:var(--fg);opacity:.85}
-.inp{display:flex;align-items:center;border:1px solid var(--line);border-radius:8px;background:var(--bg);overflow:hidden}
-.inp:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
-.inp .pre,.inp .post{font-size:13px;color:var(--muted);padding:0 10px;font-family:var(--font-num)}
-.inp .post{padding-left:0}
-.inp input{flex:1;min-width:0;border:0;background:transparent;color:var(--fg);font:500 15px/1 var(--font-num);font-variant-numeric:tabular-nums;padding:10px 10px 10px 0;outline:none}
-.inp input.pl{padding-left:10px}
-.field.minus label::before{content:"− ";color:var(--warn)}
-.info{font-size:13px;background:var(--sunk);border-radius:8px;padding:9px 12px}
-.toggle{display:flex;gap:10px;align-items:flex-start;font-size:14px;cursor:pointer}
-.toggle input{accent-color:var(--accent);width:17px;height:17px;margin-top:2px;flex:none}
-.toggle small{display:block;color:var(--muted);font-size:12.5px;line-height:1.45;margin-top:3px}
-.gold-row{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:end}
-@media (max-width:640px){.gold-row{grid-template-columns:minmax(0,1fr)}}
-.nisab-box{background:var(--sunk);border-radius:8px;padding:9px 12px}
-.nisab-box span{display:block;font-size:12.5px;color:var(--muted)}
-.nisab-box b{font-size:18px}
-input[type=date]{font:500 14px var(--font-num);border:0;background:transparent;color:var(--fg);padding:9px 10px;width:100%;outline:none}
+/* Panel hasil */
+.scale{position:sticky;top:20px;background:var(--card);border-radius:22px;padding:24px;display:grid;grid-template-columns:88px minmax(0,1fr);gap:22px;box-shadow:0 1px 0 var(--line), 0 18px 40px -28px rgba(10,60,45,.35)}
+@media (max-width:900px){.scale{position:static}}
+@media (max-width:420px){.scale{grid-template-columns:72px minmax(0,1fr);gap:16px;padding:18px}}
 
-/* Hasil */
-.result{position:sticky;top:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;gap:16px;min-width:0}
-@media (max-width:920px){.result{position:static}}
-.status{align-self:flex-start;font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border-radius:999px;padding:4px 10px}
-.status.ok{background:var(--accent-soft);color:var(--accent)}
-.status.no{background:var(--sunk);color:var(--muted)}
-.status.wait{background:var(--warn-soft);color:var(--warn)}
-.big span{font-size:13px;color:var(--muted)}
-.big b{display:block;font-size:clamp(30px,3.4vw,38px);font-weight:600;letter-spacing:-.02em;line-height:1.15}
-.reason{font-size:14px;line-height:1.6;margin:0;background:var(--sunk);border-radius:8px;padding:12px 14px}
-.reason b{font-weight:700}
-.meter{display:flex;flex-direction:column;gap:6px}
-.bar{position:relative;height:10px;background:var(--sunk);border-radius:999px}
-.bar i{position:absolute;inset:0 auto 0 0;border-radius:999px;background:var(--accent);transition:width .3s}
-.bar .tick{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--gold);border-radius:2px}
-.meter-legend{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);gap:8px}
-.meter-legend .g{color:var(--gold);font-weight:600}
-table.rinci{width:100%;border-collapse:collapse;font-size:13.5px}
-table.rinci td{padding:6px 0;border-bottom:1px solid var(--line);vertical-align:top}
-table.rinci td:last-child{text-align:right;white-space:nowrap;padding-left:12px}
-table.rinci tr.minus td:last-child{color:var(--warn)}
-table.rinci tr.sep td{border-bottom:2px solid var(--fg)}
-table.rinci tr.sum td{font-weight:700;border-bottom:0;padding-top:8px}
-table.rinci tr.mute td{color:var(--muted)}
-.timer{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--muted);border-top:1px dashed var(--line);padding-top:12px}
-.timer b{color:var(--fg)}
-.timer.over b{color:var(--warn)}
+.gauge{position:relative;height:380px;border-radius:14px;background:var(--well);overflow:visible}
+@media (max-width:900px){.gauge{height:300px}}
+.gauge .fill{position:absolute;left:0;right:0;bottom:0;border-radius:14px;background:var(--fill-low);transition:height .55s cubic-bezier(.2,.8,.2,1), background-color .4s}
+.gauge.over .fill{background:var(--emerald)}
+.gauge .cut{position:absolute;left:0;right:0;border-radius:14px 14px 0 0;transition:bottom .55s cubic-bezier(.2,.8,.2,1),height .55s cubic-bezier(.2,.8,.2,1);
+  background:repeating-linear-gradient(135deg,var(--minus) 0 3px,transparent 3px 8px);opacity:.55}
+.gauge .nisab{position:absolute;left:-8px;right:-8px;height:0;border-top:2.5px solid var(--gold);transition:bottom .55s cubic-bezier(.2,.8,.2,1)}
+.gauge .nisab::after{content:"";position:absolute;right:-5px;top:-7px;width:12px;height:12px;border-radius:50%;background:var(--gold)}
+.gauge .nisab.pulse::after{animation:pulse 1.1s ease-out 1}
+@keyframes pulse{0%{box-shadow:0 0 0 0 var(--gold)}100%{box-shadow:0 0 0 16px transparent}}
+.gauge .nlabel{position:absolute;left:50%;transform:translate(-50%,-6px);font-size:11px;font-weight:700;color:var(--card);background:var(--gold);border-radius:999px;padding:2px 8px;white-space:nowrap;transition:bottom .55s cubic-bezier(.2,.8,.2,1);margin-bottom:4px}
 
-button{font:600 14px/1 var(--font-body);border-radius:8px;padding:10px 14px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
-button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-button:hover{filter:brightness(.97)}
+.readout{display:flex;flex-direction:column;gap:14px;min-width:0;padding-top:2px;container-type:inline-size}
+.chip{align-self:flex-start;font-size:13px;font-weight:700;border-radius:999px;padding:5px 11px;background:var(--well);color:var(--soft);transition:background-color .3s,color .3s}
+.chip.ok{background:var(--emerald-soft);color:var(--emerald)}
+.chip.wait{background:var(--gold-soft);color:var(--gold)}
+.amount small{display:block;font-size:13px;color:var(--soft);margin-bottom:2px}
+.amount b{display:block;font-family:var(--display);font-weight:800;font-size:clamp(24px,14cqw,46px);line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--soft)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px}
+.legend .lf{background:var(--emerald)}
+.legend .lc{background:repeating-linear-gradient(135deg,var(--minus) 0 2px,transparent 2px 5px);opacity:.8;outline:1px solid var(--line)}
+.legend .ln{height:0;width:14px;border-top:2.5px solid var(--gold);border-radius:0}
+.reason{margin:0;font-size:14px;line-height:1.6;color:var(--ink)}
+.reason strong{font-weight:700}
+.figures{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13.5px;border-top:1px solid var(--line);padding-top:12px}
+.figures span:nth-child(odd){color:var(--soft)}
+.figures span:nth-child(even){text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.figures .m{color:var(--minus)!important}
+.figures .g{color:var(--gold)!important}
+details.more summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--emerald);list-style:none}
+details.more summary::-webkit-details-marker{display:none}
+details.more summary::before{content:"+ ";}
+details.more[open] summary::before{content:"− ";}
+.timer{font-size:12.5px;color:var(--soft);display:flex;justify-content:space-between;border-top:1px dashed var(--line);padding-top:10px}
+.timer b{color:var(--ink);font-variant-numeric:tabular-nums}
+.timer.over b{color:var(--minus)}
 
-details.basis{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 22px;margin-top:24px}
+/* Isian */
+.form{display:flex;flex-direction:column;gap:26px;min-width:0}
+.group h2{font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:-.01em;margin:0 0 4px}
+.group > p{margin:0 0 12px;color:var(--soft);font-size:14px;max-width:62ch}
+
+.goldline{background:var(--gold-soft);border-radius:16px;padding:16px 18px;display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center}
+.goldline .big{font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:-.01em}
+.goldline .cap{font-size:13px;color:var(--soft)}
+.goldline .edit{display:flex;gap:10px;flex-wrap:wrap;margin-left:auto}
+.mini{display:flex;align-items:center;gap:6px;background:var(--card);border-radius:10px;padding:0 10px;border:1px solid transparent}
+.mini:focus-within{border-color:var(--gold)}
+.mini span{font-size:12.5px;color:var(--soft)}
+.mini input{border:0;background:transparent;color:var(--ink);font:600 14px var(--body);font-variant-numeric:tabular-nums;padding:9px 0;outline:none;width:110px}
+.mini input[type=date]{width:136px}
+
+.rows{background:var(--card);border-radius:16px;overflow:hidden}
+.row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,260px);gap:6px 20px;padding:16px 18px;border-top:1px solid var(--line);align-items:start}
+.row:first-child{border-top:0}
+@media (max-width:640px){.row{grid-template-columns:minmax(0,1fr)}}
+.row label{font-weight:700;font-size:15px;display:block}
+.row .hint{display:block;font-size:13px;color:var(--soft);line-height:1.45;margin-top:2px}
+.field{display:flex;flex-direction:column;gap:4px}
+.box{display:flex;align-items:center;border-radius:12px;background:var(--well);border:1.5px solid transparent;transition:border-color .2s,background-color .2s}
+.box:focus-within{border-color:var(--emerald);background:var(--card)}
+.row.minus .box:focus-within{border-color:var(--minus)}
+.box .pre,.box .post{font-size:13px;color:var(--soft);padding:0 10px;font-weight:600}
+.box .post{padding-left:0}
+.box input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:600 16px var(--body);font-variant-numeric:tabular-nums;padding:12px 12px 12px 0;outline:none;text-align:right}
+.box input.pl{padding-left:12px}
+.box input::placeholder{color:var(--soft);opacity:.55;font-weight:500}
+.parsed{font-size:12.5px;color:var(--soft);text-align:right;min-height:18px;font-variant-numeric:tabular-nums}
+.parsed.bad{color:var(--minus)}
+.row.minus label::before{content:"− ";color:var(--minus)}
+.note{font-size:13px;color:var(--soft);padding:12px 18px;border-top:1px solid var(--line);background:var(--card)}
+
+/* Sakelar */
+.switch{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;cursor:pointer;border-top:1px solid var(--line)}
+.switch:first-child{border-top:0}
+.switch input{position:absolute;opacity:0;pointer-events:none}
+.track{flex:none;width:44px;height:26px;border-radius:999px;background:var(--line);position:relative;transition:background-color .2s;margin-top:1px}
+.track::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .2s}
+.switch input:checked + .track{background:var(--emerald)}
+.switch input:checked + .track::after{transform:translateX(18px)}
+.switch input:focus-visible + .track{outline:2px solid var(--emerald);outline-offset:2px}
+.switch b{display:block;font-size:15px}
+.switch small{display:block;font-size:13px;color:var(--soft);line-height:1.45;margin-top:2px;max-width:62ch}
+
+details.basis{border-top:1px solid var(--line);padding-top:18px}
 details.basis summary{cursor:pointer;font-weight:700}
-details.basis ul{margin:12px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px;max-width:80ch}
-details.basis li{font-size:14px}
-.foot{font-size:12.5px;color:var(--muted);margin-top:16px;max-width:80ch}
-@media (max-width:520px){body{padding:20px 16px 40px}}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+details.basis ul{margin:10px 0 0;padding-left:20px;color:var(--soft);font-size:14px;display:flex;flex-direction:column;gap:6px;max-width:72ch}
+.foot{font-size:12.5px;color:var(--soft);margin:12px 0 0;max-width:72ch}
+
+@media (max-width:520px){.wrap{padding:24px 16px 48px}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <div>
-      <div class="eyebrow">Untuk pekerja dan investor</div>
-      <h1>Kalkulator Zakat Mal Pribadi</h1>
-      <p class="lede">Isi nilai harta Anda per jenis, kurangi utang dan tabungan dari gaji yang sudah dizakati, lalu lihat status wajib zakat dan nominalnya beserta alasannya.</p>
+      <h1>Zakat mal Anda,<br>ditimbang dengan nisab.</h1>
+      <p class="lede">Isi harta Anda, dan kolom di samping naik menuju garis nisab. Boleh menulis seperti 40jt + 25jt untuk menjumlah beberapa rekening sekaligus.</p>
     </div>
-    <div class="head-actions">
-      <button type="button" id="btnSample">Isi data contoh</button>
-      <button type="button" id="btnReset">Kosongkan</button>
+    <div class="head-btns">
+      <button type="button" class="ghost" id="btnSample">Coba dengan contoh</button>
+      <button type="button" class="ghost" id="btnReset">Mulai ulang</button>
     </div>
   </header>
 
-  <div class="grid">
-    <form class="steps" id="form" novalidate>
-      <!-- 1. Harga emas -->
-      <section class="step">
-        <div class="step-head"><span class="step-n">1</span><div><h2>Harga emas dan nisab</h2>
-          <p>Nisab zakat mal setara 85 gram emas, memakai harga buyback emas Antam sesuai panduan BAZNAS. Cek harga di <a href="https://www.logammulia.com/id" target="_blank" rel="noopener">logammulia.com</a>.</p></div></div>
-        <div class="gold-row">
-          <div class="field">
-            <label for="harga">Harga buyback per gram</label>
-            <div class="inp"><span class="pre">Rp</span><input id="harga" data-kind="rp" inputmode="numeric" autocomplete="off"></div>
-          </div>
-          <div class="field">
-            <label for="tglHarga">Tanggal harga</label>
-            <div class="inp"><input type="date" id="tglHarga"></div>
-          </div>
-          <div class="nisab-box"><span>Nisab (85 g × harga)</span><b class="num" id="nisabOut">Rp0</b></div>
-        </div>
-      </section>
-
-      <!-- 2. Harta -->
-      <section class="step">
-        <div class="step-head"><span class="step-n">2</span><div><h2>Nilai harta Anda</h2>
-          <p>Pakai nilai saat haul tiba, bukan harga beli. Kolom yang tidak Anda miliki biarkan kosong. Rumah tinggal, kendaraan pribadi, dan perabot tidak dizakati.</p></div></div>
-
-        <div class="cat">
-          <div class="cat-head"><h3>Kas dan tabungan</h3><span class="sub num" id="sub_kas">Rp0</span></div>
-          <div class="fields">
-            <div class="field"><label for="kas_tab">Tabungan, giro, deposito</label>
-              <div class="inp"><span class="pre">Rp</span><input id="kas_tab" data-kind="rp" inputmode="numeric" autocomplete="off"></div>
-              <span class="hint">Jumlahkan saldo semua rekening tanpa bunga bank. <em>Contoh: BCA Rp40 juta + BSI Rp25 juta = 65.000.000</em></span></div>
-            <div class="field"><label for="kas_ew">E-wallet dan uang tunai</label>
-              <div class="inp"><span class="pre">Rp</span><input id="kas_ew" data-kind="rp" inputmode="numeric" autocomplete="off"></div>
-              <span class="hint">GoPay, OVO, DANA, ShopeePay, dan uang tunai di rumah. <em>Contoh: 1.500.000</em></span></div>
-          </div>
-        </div>
-
-        <div class="cat">
-          <div class="cat-head"><h3>Emas dan perak simpanan</h3><span class="sub num" id="sub_emas">Rp0</span></div>
-          <div class="fields">
-            <div class="field"><label for="emas_g">Emas simpanan</label>
-              <div class="inp"><input id="emas_g" class="pl" data-kind="g" inputmode="decimal" autocomplete="off"><span class="post">gram</span></div>
-              <span class="hint">Batangan, tabungan emas (Pegadaian, aplikasi), perhiasan yang disimpan. Dinilai dengan harga di langkah 1. <em>Contoh: 25,5</em></span></div>
-            <div class="field"><label for="perak">Perak simpanan</label>
-              <div class="inp"><span class="pre">Rp</span><input id="perak" data-kind="rp" inputmode="numeric" autocomplete="off"></div>
-              <span class="hint">Isi nilai jualnya dalam rupiah. <em>Contoh: 3.000.000</em></span></div>
-          </div>
-          <p class="info">Perhiasan yang dipakai sehari-hari dalam batas wajar tidak dihitung, mengikuti pendapat mayoritas ulama.</p>
-        </div>
-
-        <div class="cat">
-          <div class="cat-head"><h3>Investasi</h3><span class="sub num" id="sub_inv">Rp0</span></div>
-          <div class="fields">
-            <div class="field"><label for="inv_saham">Saham</label>
-              <div class="inp"><span class="pre">Rp</span><input id="inv_saham" data-kind="rp" inputmode="numeric" autocomplete="off"></div>
-              <span class="hint">Nilai portofolio hari ini di aplikasi sekuritas, termasuk saldo RDN. <em>Contoh: 38.000.000</em></span></div>
-            <div class="field"><label for="inv_rd">Reksa dana</label>
-              <div class="inp"><span class="pre">Rp</span><input id="inv_rd" data-kind="rp" inputmode="numeric" autocomplete="off"></div>
-              <span class="hint">Nilai berdasarkan NAB terakhir di Bibit, Bareksa, dan sejenisnya. <em>Contoh: 25.000.000</em></span></div>
-            <div class="field"><label for="inv_sukuk">Sukuk dan obligasi</label>
-              <div class="inp"><span class="pre">Rp</span><input id="inv_sukuk" data-kind="rp" inputmode="numeric" autocomplete="off"></div>
-              <span class="hint">SBR, ST, ORI, sukuk korporasi. <em>Contoh: 10.000.000</em></span></div>
-          </div>
-        </div>
-
-        <div class="cat">
-          <div class="cat-head"><h3>Piutang lancar</h3><span class="sub num" id="sub_piu">Rp0</span></div>
-          <div class="fields">
-            <div class="field"><label for="piu">Piutang yang hampir pasti kembali</label>
-              <div class="inp"><span class="pre">Rp</span><input id="piu" data-kind="rp" inputmode="numeric" autocomplete="off"></div>
-              <span class="hint">Uang yang Anda pinjamkan dan peminjamnya mampu serta mau membayar. Piutang macet tidak dimasukkan. <em>Contoh: 5.000.000</em></span></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 3. Pengurang -->
-      <section class="step">
-        <div class="step-head"><span class="step-n">3</span><div><h2>Pengurang</h2><p>Dua hal ini mengurangi harta sebelum dibandingkan dengan nisab.</p></div></div>
-        <div class="fields">
-          <div class="field minus"><label for="utang">Utang jatuh tempo 12 bulan ke depan</label>
-            <div class="inp"><span class="pre">Rp</span><input id="utang" data-kind="rp" inputmode="numeric" autocomplete="off"></div>
-            <span class="hint">Cicilan KPR, kendaraan, dan pinjaman untuk 12 bulan ke depan, bukan seluruh sisa pokok. <em>Contoh: cicilan Rp2 juta × 12 = 24.000.000</em></span></div>
-        </div>
-        <label class="toggle"><input type="checkbox" id="gajiOn" checked>
-          <span>Kurangi tabungan dari gaji yang sudah dipotong zakat penghasilan
-          <small>Aktif secara bawaan agar tidak terjadi zakat ganda dalam setahun. Sebagian ulama berpendapat tabungan dari gaji yang sudah dizakati baru mulai haul sejak diterima. Banyak lembaga zakat tetap menghitung seluruh saldo. Matikan pilihan ini jika Anda mengikuti pendapat tersebut.</small></span></label>
-        <div class="fields" id="gajiWrap">
-          <div class="field minus"><label for="gaji">Tabungan dari gaji 12 bulan terakhir</label>
-            <div class="inp"><span class="pre">Rp</span><input id="gaji" data-kind="rp" inputmode="numeric" autocomplete="off"></div>
-            <span class="hint">Perkiraan bagian saldo kas yang berasal dari gaji setahun terakhir yang sudah dipotong zakat penghasilan. Tidak bisa melebihi total kas dan tabungan. <em>Contoh: menabung Rp5 juta per bulan × 12 = 60.000.000</em></span></div>
-        </div>
-      </section>
-
-      <!-- 4. Haul -->
-      <section class="step">
-        <div class="step-head"><span class="step-n">4</span><div><h2>Haul</h2><p>Zakat mal wajib setelah harta mencapai nisab dan tersimpan genap satu tahun hijriah (sekitar 354 hari).</p></div></div>
-        <label class="toggle"><input type="checkbox" id="haul"> <span>Harta saya sudah mencapai nisab dan tersimpan genap satu tahun hijriah.</span></label>
-      </section>
-    </form>
-
-    <aside class="result" aria-live="polite">
-      <span class="status no" id="statusPill">Belum wajib</span>
-      <div class="big"><span>Zakat mal yang perlu dibayar</span><b class="num" id="zakatOut">Rp0</b></div>
-      <p class="reason" id="reason">Isi nilai harta Anda di sebelah kiri. Hasil akan berubah langsung.</p>
-      <div class="meter">
-        <div class="bar" id="bar" role="img"><i id="barFill" style="width:0%"></i><span class="tick" id="barTick" style="left:87%"></span></div>
-        <div class="meter-legend"><span>Harta bersih <b class="num" id="bersihMini">Rp0</b></span><span class="g">Nisab</span></div>
+  <div class="layout">
+    <!-- Hasil -->
+    <aside class="scale" aria-live="polite">
+      <div class="gauge" id="gauge" role="img" aria-label="Harta bersih dibanding nisab">
+        <div class="fill" id="gFill" style="height:0"></div>
+        <div class="cut" id="gCut" style="bottom:0;height:0"></div>
+        <div class="nisab" id="gNisab" style="bottom:80%"></div>
+        <div class="nlabel" id="gLabel" style="bottom:80%">Nisab</div>
       </div>
-      <table class="rinci" id="rinci"></table>
-      <div class="timer" id="timerBox"><span>Waktu pengisian</span><b class="num" id="timer">00:00</b></div>
+      <div class="readout">
+        <span class="chip" id="chip">Belum ada data</span>
+        <div class="amount"><small>Zakat mal yang perlu dibayar</small><b id="zakat">Rp0</b></div>
+        <p class="reason" id="reason">Mulai dari kas dan tabungan. Hasil berubah setiap Anda mengetik.</p>
+        <div class="legend"><span><i class="lf"></i>Harta bersih</span><span><i class="lc"></i>Dikurangi</span><span><i class="ln"></i>Nisab</span></div>
+        <details class="more">
+          <summary>Lihat rincian</summary>
+          <div class="figures" id="figures" style="margin-top:10px"></div>
+        </details>
+        <div class="timer" id="timerBox"><span>Waktu pengisian</span><b id="timer">0:00</b></div>
+      </div>
     </aside>
-  </div>
 
-  <details class="basis">
-    <summary>Asumsi perhitungan</summary>
-    <ul>
-      <li>Nisab 85 gram emas dengan harga buyback Antam, mengikuti panduan zakat emas BAZNAS. Tarif 2,5% dari harta bersih.</li>
-      <li>Kas, emas, perak, investasi, dan piutang lancar digabung dalam satu nisab. Investasi memakai nilai pasar saat haul.</li>
-      <li>Perhiasan yang dipakai wajar, rumah tinggal, kendaraan pribadi, dan perabot tidak dihitung.</li>
-      <li>Utang yang dikurangkan hanya yang jatuh tempo dalam 12 bulan ke depan.</li>
-      <li>Tabungan dari gaji yang sudah dipotong zakat penghasilan dikurangkan secara bawaan untuk menghindari zakat ganda dalam setahun. Bagian ini dizakati pada haul berikutnya. Pilihan ini bisa dimatikan.</li>
-      <li>Aset usaha, kripto, zakat penghasilan, pertanian, dan peternakan belum dicakup di versi ini.</li>
-    </ul>
-  </details>
-  <p class="foot">Prototipe alat bantu hitung, bukan fatwa. Semua hitungan berjalan di browser Anda dan tidak ada data yang dikirim atau disimpan. Untuk kasus yang tidak biasa, konsultasikan dengan amil atau lembaga zakat resmi.</p>
+    <!-- Isian -->
+    <form class="form" id="form" novalidate autocomplete="off">
+      <section class="group">
+        <h2>Nisab hari ini</h2>
+        <div class="goldline">
+          <div>
+            <div class="big tnum" id="nisabBig">Rp0</div>
+            <div class="cap" id="nisabCap">85 gram emas, harga buyback Antam</div>
+          </div>
+          <div class="edit">
+            <label class="mini"><span>Rp/gram</span><input id="harga" inputmode="numeric" aria-label="Harga buyback emas per gram"></label>
+            <label class="mini"><span>Tanggal</span><input type="date" id="tgl" aria-label="Tanggal harga emas"></label>
+          </div>
+        </div>
+        <p class="foot">Cek harga buyback terbaru di <a href="https://www.logammulia.com/id" target="_blank" rel="noopener">logammulia.com</a>.</p>
+      </section>
+
+      <section class="group">
+        <h2>Harta yang Anda simpan</h2>
+        <p>Pakai nilai saat ini, bukan harga beli. Lewati yang tidak Anda punya.</p>
+        <div class="rows">
+          <div class="row">
+            <div><label for="kas">Kas dan tabungan</label><span class="hint">Semua rekening, deposito, e-wallet, dan uang tunai. Tanpa bunga bank.</span></div>
+            <div class="field"><div class="box"><span class="pre">Rp</span><input id="kas" data-kind="rp" placeholder="40jt + 25jt + 1,5jt"></div><span class="parsed" id="p_kas"></span></div>
+          </div>
+          <div class="row">
+            <div><label for="emas">Emas simpanan</label><span class="hint">Batangan, tabungan emas, perhiasan yang disimpan. Dinilai dengan harga di atas.</span></div>
+            <div class="field"><div class="box"><input id="emas" class="pl" data-kind="g" inputmode="decimal" placeholder="20"><span class="post">gram</span></div><span class="parsed" id="p_emas"></span></div>
+          </div>
+          <div class="row">
+            <div><label for="perak">Perak simpanan</label><span class="hint">Nilai jualnya dalam rupiah.</span></div>
+            <div class="field"><div class="box"><span class="pre">Rp</span><input id="perak" data-kind="rp" placeholder="3jt"></div><span class="parsed" id="p_perak"></span></div>
+          </div>
+          <div class="row">
+            <div><label for="inv">Investasi</label><span class="hint">Saham dan saldo RDN, reksa dana (NAB terakhir), sukuk dan obligasi. Nilai pasar hari ini.</span></div>
+            <div class="field"><div class="box"><span class="pre">Rp</span><input id="inv" data-kind="rp" placeholder="38jt + 25jt + 10jt"></div><span class="parsed" id="p_inv"></span></div>
+          </div>
+          <div class="row">
+            <div><label for="piu">Piutang lancar</label><span class="hint">Uang yang Anda pinjamkan dan hampir pasti kembali. Piutang macet tidak dimasukkan.</span></div>
+            <div class="field"><div class="box"><span class="pre">Rp</span><input id="piu" data-kind="rp" placeholder="5jt"></div><span class="parsed" id="p_piu"></span></div>
+          </div>
+          <p class="note">Perhiasan yang dipakai sehari-hari, rumah tinggal, kendaraan pribadi, dan perabot tidak dizakati.</p>
+        </div>
+      </section>
+
+      <section class="group">
+        <h2>Yang mengurangi</h2>
+        <p>Dua hal ini dikurangkan sebelum harta dibandingkan dengan nisab.</p>
+        <div class="rows">
+          <div class="row minus">
+            <div><label for="utang">Utang jatuh tempo 12 bulan</label><span class="hint">Cicilan KPR, kendaraan, dan pinjaman untuk 12 bulan ke depan, bukan seluruh sisa pokok.</span></div>
+            <div class="field"><div class="box"><span class="pre">Rp</span><input id="utang" data-kind="rp" placeholder="2jt x 12"></div><span class="parsed" id="p_utang"></span></div>
+          </div>
+          <label class="switch"><input type="checkbox" id="gajiOn" checked><span class="track"></span>
+            <span><b>Kurangi tabungan dari gaji yang sudah dizakati</b>
+            <small>Aktif agar tidak terjadi zakat ganda dalam setahun. Sebagian ulama berpendapat tabungan dari gaji yang sudah dipotong zakat penghasilan baru mulai haul sejak diterima. Banyak lembaga zakat tetap menghitung seluruh saldo. Matikan jika Anda mengikuti pendapat itu.</small></span></label>
+          <div class="row minus" id="gajiRow">
+            <div><label for="gaji">Tabungan dari gaji 12 bulan terakhir</label><span class="hint">Perkiraan bagian saldo kas yang berasal dari gaji setahun terakhir. Paling banyak sebesar kas dan tabungan.</span></div>
+            <div class="field"><div class="box"><span class="pre">Rp</span><input id="gaji" data-kind="rp" placeholder="5jt x 12"></div><span class="parsed" id="p_gaji"></span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="group">
+        <h2>Haul</h2>
+        <div class="rows">
+          <label class="switch"><input type="checkbox" id="haul"><span class="track"></span>
+            <span><b>Harta saya sudah mencapai nisab selama setahun</b>
+            <small>Zakat mal wajib setelah harta mencapai nisab dan tersimpan genap satu tahun hijriah, sekitar 354 hari.</small></span></label>
+        </div>
+      </section>
+
+      <details class="basis">
+        <summary>Dasar perhitungan</summary>
+        <ul>
+          <li>Nisab 85 gram emas dengan harga buyback Antam, mengikuti panduan zakat emas BAZNAS. Tarif 2,5% dari harta bersih.</li>
+          <li>Kas, emas, perak, investasi, dan piutang lancar digabung dalam satu nisab.</li>
+          <li>Utang yang dikurangkan hanya yang jatuh tempo dalam 12 bulan ke depan.</li>
+          <li>Tabungan dari gaji yang sudah dipotong zakat penghasilan dikurangkan secara bawaan dan dizakati pada haul berikutnya.</li>
+          <li>Aset usaha, kripto, dan zakat penghasilan belum dicakup di versi ini.</li>
+        </ul>
+        <p class="foot">Alat bantu hitung, bukan fatwa. Semua hitungan berjalan di browser Anda, tidak ada data yang dikirim atau disimpan.</p>
+      </details>
+    </form>
+  </div>
 </div>
 
 <script>
 (function(){
   var HARGA_DEFAULT = 2365000, TGL_DEFAULT = '2026-10-22', NISAB_G = 85, RATE = 0.025;
-  var $ = function(id){ return document.getElementById(id); };
-  var fmt = function(n){ return 'Rp' + Math.round(n).toLocaleString('id-ID'); };
-  var fmtNum = function(n){ return Math.round(n).toLocaleString('id-ID'); };
-  var parseRp = function(s){ var d = String(s||'').replace(/\D/g,''); return d ? Number(d) : 0; };
-  var parseG = function(s){ var n = parseFloat(String(s||'').replace(',', '.').replace(/[^\d.]/g,'')); return isFinite(n) ? n : 0; };
   var BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  var $ = function(id){ return document.getElementById(id); };
+  var rp = function(n){ return 'Rp' + Math.round(n).toLocaleString('id-ID'); };
+  var short = function(n){
+    if(n >= 1e9) return 'Rp' + (n/1e9).toLocaleString('id-ID',{maximumFractionDigits:2}) + ' M';
+    if(n >= 1e6) return 'Rp' + (n/1e6).toLocaleString('id-ID',{maximumFractionDigits:1}) + ' jt';
+    return rp(n);
+  };
   var tglLabel = function(iso){ if(!iso) return 'tanggal belum diisi'; var p = iso.split('-'); return (+p[2]) + ' ' + BULAN[+p[1]-1] + ' ' + p[0]; };
 
-  var RP_IDS = ['harga','kas_tab','kas_ew','perak','inv_saham','inv_rd','inv_sukuk','piu','utang','gaji'];
-  var val = function(id){ var el = $(id); return el.dataset.kind === 'g' ? parseG(el.value) : parseRp(el.value); };
-  var setRp = function(id, n){ $(id).value = n ? fmtNum(n) : ''; };
+  // Pengurai angka santai: "40jt + 25jt", "1,5 juta", "2jt x 12", "150.000.000"
+  var MULT = {jt:1e6, juta:1e6, rb:1e3, ribu:1e3, k:1e3, m:1e9, miliar:1e9, milyar:1e9};
+  function parseTerm(t){
+    t = t.trim().toLowerCase().replace(/^rp\.?\s*/,'');
+    if(!t) return 0;
+    var m = t.match(/^([\d.,]+)\s*([a-z]*)$/);
+    if(!m) return NaN;
+    var num = m[1], suf = m[2];
+    if(suf && !(suf in MULT)) return NaN;
+    var v;
+    if(suf){ v = parseFloat(num.replace(',', '.')); }
+    else { v = parseFloat(num.replace(/\./g,'').replace(',', '.')); }
+    if(!isFinite(v)) return NaN;
+    return v * (suf ? MULT[suf] : 1);
+  }
+  function parseExpr(s){
+    s = String(s||'').trim();
+    if(!s) return {v:0, expr:false};
+    var parts = s.split('+'), total = 0, expr = parts.length > 1;
+    for(var i = 0; i < parts.length; i++){
+      var f = parts[i].split(/[x×*]/i);
+      if(f.length > 1) expr = true;
+      var prod = 1;
+      for(var j = 0; j < f.length; j++){
+        var raw = f[j];
+        var v = j > 0 ? parseFloat(raw.trim().replace(',', '.')) : parseTerm(raw);
+        if(j === 0 && /[a-z]/i.test(raw.replace(/rp/i,''))) expr = true;
+        if(!isFinite(v)) return {v:NaN, expr:true};
+        prod *= v;
+      }
+      total += prod;
+    }
+    return {v:total, expr:expr};
+  }
+  function parseG(s){ var n = parseFloat(String(s||'').replace(',', '.').replace(/[^\d.]/g,'')); return isFinite(n) ? n : 0; }
 
-  function compute(){
-    var harga = val('harga');
-    var nisab = NISAB_G * harga;
-    var kas = val('kas_tab') + val('kas_ew');
-    var emas = val('emas_g') * harga + val('perak');
-    var inv = val('inv_saham') + val('inv_rd') + val('inv_sukuk');
-    var piu = val('piu');
-    var total = kas + emas + inv + piu;
-    var utang = val('utang');
+  var RP_FIELDS = ['kas','perak','inv','piu','utang','gaji'];
+  var vals = {};
+
+  function readFields(){
+    var bad = false;
+    RP_FIELDS.forEach(function(id){
+      var r = parseExpr($(id).value), p = $('p_'+id);
+      if(isNaN(r.v)){ vals[id] = 0; p.textContent = 'Tulis angka, misalnya 40jt atau 40.000.000'; p.className = 'parsed bad'; bad = true; }
+      else { vals[id] = r.v; p.textContent = r.expr && r.v ? '= ' + rp(r.v) : ''; p.className = 'parsed'; }
+    });
+    vals.emas_g = parseG($('emas').value);
+    vals.harga = parseExpr($('harga').value).v || 0;
+    $('p_emas').textContent = vals.emas_g && vals.harga ? '= ' + rp(vals.emas_g * vals.harga) : '';
+  }
+
+  var wasOver = false;
+  function render(){
+    readFields();
+    var harga = vals.harga, nisab = NISAB_G * harga;
+    var kas = vals.kas, emas = vals.emas_g * harga;
+    var bruto = kas + emas + vals.perak + vals.inv + vals.piu;
     var gajiOn = $('gajiOn').checked;
-    var gajiIn = gajiOn ? val('gaji') : 0;
-    var gaji = Math.min(gajiIn, kas);           // tidak bisa melebihi kas
-    var bersih = Math.max(0, total - utang - gaji);
-    var capai = harga > 0 && bersih >= nisab && bersih > 0;
+    var gaji = gajiOn ? Math.min(vals.gaji, kas) : 0;
+    var pengurang = Math.min(bruto, vals.utang + gaji);
+    var bersih = Math.max(0, bruto - vals.utang - gaji);
+    var capai = harga > 0 && bersih > 0 && bersih >= nisab;
     var haul = $('haul').checked;
     var wajib = capai && haul;
-    return {harga:harga, nisab:nisab, kas:kas, emas:emas, inv:inv, piu:piu, total:total, utang:utang,
-            gajiOn:gajiOn, gaji:gaji, gajiCapped:gajiIn > kas, bersih:bersih, capai:capai, haul:haul, wajib:wajib,
-            zakat: wajib ? bersih * RATE : 0};
-  }
+    var zakat = wajib ? bersih * RATE : 0;
 
-  function render(){
-    var r = compute();
-    $('nisabOut').textContent = fmt(r.nisab);
-    $('sub_kas').textContent = fmt(r.kas);
-    $('sub_emas').textContent = fmt(r.emas);
-    $('sub_inv').textContent = fmt(r.inv);
-    $('sub_piu').textContent = fmt(r.piu);
-    $('gajiWrap').hidden = !r.gajiOn;
-    $('zakatOut').textContent = fmt(r.zakat);
-    $('bersihMini').textContent = fmt(r.bersih);
+    $('gajiRow').hidden = !gajiOn;
+    $('nisabBig').textContent = rp(nisab);
+    $('nisabCap').textContent = '85 gram × ' + rp(harga) + ', harga buyback Antam ' + tglLabel($('tgl').value);
 
-    var nisabTxt = fmt(r.nisab) + ' (85 gram × ' + fmt(r.harga) + ', harga buyback Antam ' + tglLabel($('tglHarga').value) + ')';
-    var label, cls, reason;
-    if(r.harga <= 0){
-      label = 'Isi harga emas'; cls = 'wait';
-      reason = 'Isi harga buyback emas di langkah 1 agar nisab bisa dihitung.';
-    } else if(r.total <= 0){
-      label = 'Belum ada data'; cls = 'no';
-      reason = 'Isi nilai harta Anda di langkah 2. Hasil akan berubah langsung.';
-    } else if(r.wajib){
-      label = 'Wajib zakat'; cls = 'ok';
-      reason = 'Harta bersih Anda <b>' + fmt(r.bersih) + '</b> sudah melewati nisab ' + nisabTxt + ' dan sudah haul. Karena itu zakat = 2,5% × ' + fmt(r.bersih) + ' = <b>' + fmt(r.zakat) + '</b>.';
-    } else if(r.capai){
-      label = 'Belum haul'; cls = 'wait';
-      reason = 'Harta bersih Anda <b>' + fmt(r.bersih) + '</b> sudah mencapai nisab ' + nisabTxt + ', tetapi belum tersimpan genap satu tahun hijriah. Zakat mal belum wajib sekarang. Perkiraan zakat saat haul tiba: <b>' + fmt(r.bersih * RATE) + '</b>.';
-    } else {
-      label = 'Belum wajib'; cls = 'no';
-      reason = 'Harta bersih Anda <b>' + fmt(r.bersih) + '</b> masih kurang <b>' + fmt(r.nisab - r.bersih) + '</b> dari nisab ' + nisabTxt + '. Zakat mal belum wajib. Sedekah tetap dianjurkan.';
-    }
-    if(r.gajiOn && r.gaji > 0 && r.harga > 0){
-      reason += ' Tabungan dari gaji sebesar ' + fmt(r.gaji) + ' tidak dihitung tahun ini karena sudah dipotong zakat penghasilan; bagian ini dizakati pada haul berikutnya.';
-    }
-    if(r.gajiCapped){ reason += ' Catatan: tabungan dari gaji yang Anda isi melebihi total kas, jadi dibatasi sebesar total kas.'; }
-    $('statusPill').textContent = label; $('statusPill').className = 'status ' + cls;
+    // Timbangan
+    var top = Math.max(bruto, nisab, 1) * 1.12;
+    var pct = function(v){ return Math.min(100, v / top * 100); };
+    var g = $('gauge');
+    $('gFill').style.height = pct(bersih) + '%';
+    $('gCut').style.bottom = pct(bersih) + '%';
+    $('gCut').style.height = pct(pengurang) + '%';
+    $('gNisab').style.bottom = pct(nisab) + '%';
+    $('gLabel').style.bottom = pct(nisab) + '%';
+    $('gLabel').textContent = 'Nisab';
+    g.classList.toggle('over', capai);
+    g.setAttribute('aria-label', 'Harta bersih ' + rp(bersih) + ' dibanding nisab ' + rp(nisab));
+    if(capai && !wasOver){ var n = $('gNisab'); n.classList.remove('pulse'); void n.offsetWidth; n.classList.add('pulse'); }
+    wasOver = capai;
+
+    // Status dan alasan
+    var chip = $('chip'), label, cls = '', reason;
+    if(harga <= 0){ label = 'Isi harga emas'; cls = 'wait'; reason = 'Isi harga buyback emas per gram agar nisab bisa dihitung.'; }
+    else if(bruto <= 0){ label = 'Belum ada data'; reason = 'Mulai dari kas dan tabungan. Hasil berubah setiap Anda mengetik.'; }
+    else if(wajib){ label = 'Wajib zakat'; cls = 'ok';
+      reason = 'Harta bersih Anda <strong>' + rp(bersih) + '</strong> sudah melewati nisab ' + rp(nisab) + ' dan sudah haul. Zakatnya 2,5% × ' + rp(bersih) + ' = <strong>' + rp(zakat) + '</strong>.'; }
+    else if(capai){ label = 'Belum haul'; cls = 'wait';
+      reason = 'Harta bersih Anda <strong>' + rp(bersih) + '</strong> sudah mencapai nisab, tetapi belum tersimpan setahun. Saat haul tiba, perkiraan zakatnya <strong>' + rp(bersih * RATE) + '</strong>.'; }
+    else { label = 'Belum wajib';
+      reason = 'Harta bersih Anda <strong>' + rp(bersih) + '</strong>, masih kurang <strong>' + rp(nisab - bersih) + '</strong> dari nisab. Zakat mal belum wajib. Sedekah tetap dianjurkan.'; }
+    if(gajiOn && gaji > 0 && harga > 0 && bruto > 0){ reason += ' Tabungan dari gaji ' + rp(gaji) + ' tidak dihitung tahun ini karena sudah dipotong zakat penghasilan.'; }
+    if(gajiOn && vals.gaji > kas && bruto > 0){ reason += ' Tabungan dari gaji dibatasi sebesar kas dan tabungan Anda.'; }
+    chip.textContent = label; chip.className = 'chip ' + cls;
+    $('zakat').textContent = rp(zakat);
     $('reason').innerHTML = reason;
 
-    var scale = Math.max(r.bersih, r.nisab, 1) * 1.15;
-    $('barFill').style.width = Math.min(100, r.bersih / scale * 100) + '%';
-    $('barTick').style.left = Math.min(100, r.nisab / scale * 100) + '%';
-    $('bar').setAttribute('aria-label', 'Harta bersih ' + fmt(r.bersih) + ' dibanding nisab ' + fmt(r.nisab));
-
-    var rows = [['Kas dan tabungan', r.kas], ['Emas dan perak', r.emas], ['Investasi', r.inv], ['Piutang lancar', r.piu]];
-    var h = rows.map(function(x){ return '<tr' + (x[1] ? '' : ' class="mute"') + '><td>' + x[0] + '</td><td class="num">' + fmt(x[1]) + '</td></tr>'; }).join('');
-    h += '<tr class="minus"><td>Utang jatuh tempo</td><td class="num">−' + fmt(r.utang) + '</td></tr>';
-    h += '<tr class="minus sep"><td>Tabungan dari gaji' + (r.gajiOn ? '' : ' (nonaktif)') + '</td><td class="num">−' + fmt(r.gaji) + '</td></tr>';
-    h += '<tr class="sum"><td>Harta bersih</td><td class="num">' + fmt(r.bersih) + '</td></tr>';
-    h += '<tr><td>Nisab</td><td class="num">' + fmt(r.nisab) + '</td></tr>';
-    h += '<tr class="sum"><td>Zakat 2,5%</td><td class="num">' + fmt(r.zakat) + '</td></tr>';
-    $('rinci').innerHTML = h;
+    var f = '';
+    f += '<span>Kas dan tabungan</span><span>' + rp(kas) + '</span>';
+    f += '<span>Emas dan perak</span><span>' + rp(emas + vals.perak) + '</span>';
+    f += '<span>Investasi</span><span>' + rp(vals.inv) + '</span>';
+    f += '<span>Piutang lancar</span><span>' + rp(vals.piu) + '</span>';
+    f += '<span>Utang 12 bulan</span><span class="m">−' + rp(vals.utang) + '</span>';
+    f += '<span>Tabungan dari gaji</span><span class="m">−' + rp(gaji) + '</span>';
+    f += '<span>Harta bersih</span><span>' + rp(bersih) + '</span>';
+    f += '<span>Nisab</span><span class="g">' + rp(nisab) + '</span>';
+    f += '<span>Zakat 2,5%</span><span>' + rp(zakat) + '</span>';
+    $('figures').innerHTML = f;
   }
 
-  // Penghitung waktu pengisian, untuk menguji target di bawah 10 menit
+  // Waktu pengisian, untuk menguji target di bawah 10 menit
   var start = null, tick = null;
   function startTimer(){
-    if(start) return;
-    start = Date.now();
+    if(start) return; start = Date.now();
     tick = setInterval(function(){
       var s = Math.floor((Date.now() - start) / 1000);
-      $('timer').textContent = String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+      $('timer').textContent = Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
       $('timerBox').classList.toggle('over', s >= 600);
     }, 1000);
   }
-  function resetTimer(){ clearInterval(tick); start = null; $('timer').textContent = '00:00'; $('timerBox').classList.remove('over'); }
+  function stopTimer(){ clearInterval(tick); start = null; $('timer').textContent = '0:00'; $('timerBox').classList.remove('over'); }
 
   $('form').addEventListener('input', function(e){
-    var el = e.target;
-    if(el.dataset.kind === 'rp'){ var n = parseRp(el.value); el.value = n ? fmtNum(n) : ''; }
-    if(el.dataset.kind === 'g'){ el.value = el.value.replace(/[^\d.,]/g,''); }
-    startTimer(); render();
+    if(e.target.id === 'emas') e.target.value = e.target.value.replace(/[^\d.,]/g,'');
+    if(e.target.id !== 'tgl') startTimer();
+    render();
   });
   $('form').addEventListener('change', render);
   $('form').addEventListener('submit', function(e){ e.preventDefault(); });
+  // Rapikan angka biasa saat kolom ditinggalkan
+  $('form').addEventListener('focusout', function(e){
+    var el = e.target;
+    if(RP_FIELDS.indexOf(el.id) < 0 && el.id !== 'harga') return;
+    var r = parseExpr(el.value);
+    if(!r.expr && r.v > 0) el.value = Math.round(r.v).toLocaleString('id-ID');
+  });
 
   function reset(){
-    RP_IDS.forEach(function(id){ $(id).value = ''; });
-    $('emas_g').value = '';
-    setRp('harga', HARGA_DEFAULT);
-    $('tglHarga').value = TGL_DEFAULT;
-    $('gajiOn').checked = true;
-    $('haul').checked = false;
-    resetTimer(); render();
+    RP_FIELDS.forEach(function(id){ $(id).value = ''; });
+    $('emas').value = '';
+    $('harga').value = HARGA_DEFAULT.toLocaleString('id-ID');
+    $('tgl').value = TGL_DEFAULT;
+    $('gajiOn').checked = true; $('haul').checked = false;
+    wasOver = false; stopTimer(); render();
   }
   $('btnReset').addEventListener('click', reset);
   $('btnSample').addEventListener('click', function(){
     reset();
-    var s = {kas_tab:165000000, kas_ew:3500000, perak:0, inv_saham:38000000, inv_rd:25000000, inv_sukuk:10000000, piu:5000000, utang:24000000, gaji:60000000};
-    Object.keys(s).forEach(function(k){ setRp(k, s[k]); });
-    $('emas_g').value = '20';
+    $('kas').value = '120jt + 45jt + 3,5jt';
+    $('emas').value = '20';
+    $('inv').value = '38jt + 25jt + 10jt';
+    $('piu').value = '5jt';
+    $('utang').value = '2jt x 12';
+    $('gaji').value = '5jt x 12';
     $('haul').checked = true;
     render();
   });
