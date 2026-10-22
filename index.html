@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kalkulator Zakat Mal Pribadi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Tata letak desktop: form di kiri, panel hasil menempel di kanan. Satu kolom di layar sempit. */
+:root{
+  --bg:#F3F6F4; --surface:#FFFFFF; --sunk:#E8EEEA; --line:#D3DDD7;
+  --fg:#13201B; --muted:#56665E;
+  --accent:#0E6A4E; --accent-ink:#FFFFFF; --accent-soft:#DCEFE6;
+  --gold:#9C7A22; --gold-soft:#F4EBD2;
+  --warn:#A2560B; --warn-soft:#FBEBD8;
+  --font-body:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-num:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --r:10px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#0E1412; --surface:#151D1A; --sunk:#1B2521; --line:#2A3631;
+  --fg:#E4ECE7; --muted:#97A79F;
+  --accent:#4DBE93; --accent-ink:#06130E; --accent-soft:#163429;
+  --gold:#D9B65C; --gold-soft:#2E2715;
+  --warn:#E9A15A; --warn-soft:#33230F; color-scheme:dark;}}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.55;padding:32px 24px 56px}
+.wrap{max-width:1180px;margin:0 auto}
+h1,h2,h3{margin:0;text-wrap:balance}
+.num{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+
+header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between;margin-bottom:24px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-size:clamp(28px,3.6vw,38px);font-weight:800;letter-spacing:-.02em;line-height:1.1;margin-top:4px}
+.lede{color:var(--muted);max-width:62ch;margin:8px 0 0}
+.head-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:24px;align-items:start}
+@media (max-width:920px){.grid{grid-template-columns:minmax(0,1fr)}}
+.steps{display:flex;flex-direction:column;gap:16px;min-width:0}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px;display:flex;flex-direction:column;gap:16px}
+.step-head{display:flex;gap:12px;align-items:baseline}
+.step-n{font-family:var(--font-num);font-size:13px;color:var(--accent);font-weight:600;flex:none}
+.step-head h2{font-size:18px;font-weight:700}
+.step-head p{margin:2px 0 0;color:var(--muted);font-size:14px;max-width:70ch}
+
+.cat{display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--line);padding-top:16px}
+.cat:first-of-type{border-top:0;padding-top:0}
+.cat-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.cat-head h3{font-size:15px;font-weight:700}
+.cat-head .sub{font-size:13px;color:var(--muted)}
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:13.5px;font-weight:600}
+.hint{font-size:12.5px;color:var(--muted);line-height:1.45}
+.hint em{font-style:normal;color:var(--fg);opacity:.85}
+.inp{display:flex;align-items:center;border:1px solid var(--line);border-radius:8px;background:var(--bg);overflow:hidden}
+.inp:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.inp .pre,.inp .post{font-size:13px;color:var(--muted);padding:0 10px;font-family:var(--font-num)}
+.inp .post{padding-left:0}
+.inp input{flex:1;min-width:0;border:0;background:transparent;color:var(--fg);font:500 15px/1 var(--font-num);font-variant-numeric:tabular-nums;padding:10px 10px 10px 0;outline:none}
+.inp input.pl{padding-left:10px}
+.field.minus label::before{content:"− ";color:var(--warn)}
+.info{font-size:13px;background:var(--sunk);border-radius:8px;padding:9px 12px}
+.toggle{display:flex;gap:10px;align-items:flex-start;font-size:14px;cursor:pointer}
+.toggle input{accent-color:var(--accent);width:17px;height:17px;margin-top:2px;flex:none}
+.toggle small{display:block;color:var(--muted);font-size:12.5px;line-height:1.45;margin-top:3px}
+.gold-row{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:end}
+@media (max-width:640px){.gold-row{grid-template-columns:minmax(0,1fr)}}
+.nisab-box{background:var(--sunk);border-radius:8px;padding:9px 12px}
+.nisab-box span{display:block;font-size:12.5px;color:var(--muted)}
+.nisab-box b{font-size:18px}
+input[type=date]{font:500 14px var(--font-num);border:0;background:transparent;color:var(--fg);padding:9px 10px;width:100%;outline:none}
+
+/* Hasil */
+.result{position:sticky;top:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;gap:16px;min-width:0}
+@media (max-width:920px){.result{position:static}}
+.status{align-self:flex-start;font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border-radius:999px;padding:4px 10px}
+.status.ok{background:var(--accent-soft);color:var(--accent)}
+.status.no{background:var(--sunk);color:var(--muted)}
+.status.wait{background:var(--warn-soft);color:var(--warn)}
+.big span{font-size:13px;color:var(--muted)}
+.big b{display:block;font-size:clamp(30px,3.4vw,38px);font-weight:600;letter-spacing:-.02em;line-height:1.15}
+.reason{font-size:14px;line-height:1.6;margin:0;background:var(--sunk);border-radius:8px;padding:12px 14px}
+.reason b{font-weight:700}
+.meter{display:flex;flex-direction:column;gap:6px}
+.bar{position:relative;height:10px;background:var(--sunk);border-radius:999px}
+.bar i{position:absolute;inset:0 auto 0 0;border-radius:999px;background:var(--accent);transition:width .3s}
+.bar .tick{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--gold);border-radius:2px}
+.meter-legend{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);gap:8px}
+.meter-legend .g{color:var(--gold);font-weight:600}
+table.rinci{width:100%;border-collapse:collapse;font-size:13.5px}
+table.rinci td{padding:6px 0;border-bottom:1px solid var(--line);vertical-align:top}
+table.rinci td:last-child{text-align:right;white-space:nowrap;padding-left:12px}
+table.rinci tr.minus td:last-child{color:var(--warn)}
+table.rinci tr.sep td{border-bottom:2px solid var(--fg)}
+table.rinci tr.sum td{font-weight:700;border-bottom:0;padding-top:8px}
+table.rinci tr.mute td{color:var(--muted)}
+.timer{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--muted);border-top:1px dashed var(--line);padding-top:12px}
+.timer b{color:var(--fg)}
+.timer.over b{color:var(--warn)}
+
+button{font:600 14px/1 var(--font-body);border-radius:8px;padding:10px 14px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button:hover{filter:brightness(.97)}
+
+details.basis{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 22px;margin-top:24px}
+details.basis summary{cursor:pointer;font-weight:700}
+details.basis ul{margin:12px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px;max-width:80ch}
+details.basis li{font-size:14px}
+.foot{font-size:12.5px;color:var(--muted);margin-top:16px;max-width:80ch}
+@media (max-width:520px){body{padding:20px 16px 40px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Untuk pekerja dan investor</div>
+      <h1>Kalkulator Zakat Mal Pribadi</h1>
+      <p class="lede">Isi nilai harta Anda per jenis, kurangi utang dan tabungan dari gaji yang sudah dizakati, lalu lihat status wajib zakat dan nominalnya beserta alasannya.</p>
+    </div>
+    <div class="head-actions">
+      <button type="button" id="btnSample">Isi data contoh</button>
+      <button type="button" id="btnReset">Kosongkan</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <form class="steps" id="form" novalidate>
+      <!-- 1. Harga emas -->
+      <section class="step">
+        <div class="step-head"><span class="step-n">1</span><div><h2>Harga emas dan nisab</h2>
+          <p>Nisab zakat mal setara 85 gram emas, memakai harga buyback emas Antam sesuai panduan BAZNAS. Cek harga di <a href="https://www.logammulia.com/id" target="_blank" rel="noopener">logammulia.com</a>.</p></div></div>
+        <div class="gold-row">
+          <div class="field">
+            <label for="harga">Harga buyback per gram</label>
+            <div class="inp"><span class="pre">Rp</span><input id="harga" data-kind="rp" inputmode="numeric" autocomplete="off"></div>
+          </div>
+          <div class="field">
+            <label for="tglHarga">Tanggal harga</label>
+            <div class="inp"><input type="date" id="tglHarga"></div>
+          </div>
+          <div class="nisab-box"><span>Nisab (85 g × harga)</span><b class="num" id="nisabOut">Rp0</b></div>
+        </div>
+      </section>
+
+      <!-- 2. Harta -->
+      <section class="step">
+        <div class="step-head"><span class="step-n">2</span><div><h2>Nilai harta Anda</h2>
+          <p>Pakai nilai saat haul tiba, bukan harga beli. Kolom yang tidak Anda miliki biarkan kosong. Rumah tinggal, kendaraan pribadi, dan perabot tidak dizakati.</p></div></div>
+
+        <div class="cat">
+          <div class="cat-head"><h3>Kas dan tabungan</h3><span class="sub num" id="sub_kas">Rp0</span></div>
+          <div class="fields">
+            <div class="field"><label for="kas_tab">Tabungan, giro, deposito</label>
+              <div class="inp"><span class="pre">Rp</span><input id="kas_tab" data-kind="rp" inputmode="numeric" autocomplete="off"></div>
+              <span class="hint">Jumlahkan saldo semua rekening tanpa bunga bank. <em>Contoh: BCA Rp40 juta + BSI Rp25 juta = 65.000.000</em></span></div>
+            <div class="field"><label for="kas_ew">E-wallet dan uang tunai</label>
+              <div class="inp"><span class="pre">Rp</span><input id="kas_ew" data-kind="rp" inputmode="numeric" autocomplete="off"></div>
+              <span class="hint">GoPay, OVO, DANA, ShopeePay, dan uang tunai di rumah. <em>Contoh: 1.500.000</em></span></div>
+          </div>
+        </div>
+
+        <div class="cat">
+          <div class="cat-head"><h3>Emas dan perak simpanan</h3><span class="sub num" id="sub_emas">Rp0</span></div>
+          <div class="fields">
+            <div class="field"><label for="emas_g">Emas simpanan</label>
+              <div class="inp"><input id="emas_g" class="pl" data-kind="g" inputmode="decimal" autocomplete="off"><span class="post">gram</span></div>
+              <span class="hint">Batangan, tabungan emas (Pegadaian, aplikasi), perhiasan yang disimpan. Dinilai dengan harga di langkah 1. <em>Contoh: 25,5</em></span></div>
+            <div class="field"><label for="perak">Perak simpanan</label>
+              <div class="inp"><span class="pre">Rp</span><input id="perak" data-kind="rp" inputmode="numeric" autocomplete="off"></div>
+              <span class="hint">Isi nilai jualnya dalam rupiah. <em>Contoh: 3.000.000</em></span></div>
+          </div>
+          <p class="info">Perhiasan yang dipakai sehari-hari dalam batas wajar tidak dihitung, mengikuti pendapat mayoritas ulama.</p>
+        </div>
+
+        <div class="cat">
+          <div class="cat-head"><h3>Investasi</h3><span class="sub num" id="sub_inv">Rp0</span></div>
+          <div class="fields">
+            <div class="field"><label for="inv_saham">Saham</label>
+              <div class="inp"><span class="pre">Rp</span><input id="inv_saham" data-kind="rp" inputmode="numeric" autocomplete="off"></div>
+              <span class="hint">Nilai portofolio hari ini di aplikasi sekuritas, termasuk saldo RDN. <em>Contoh: 38.000.000</em></span></div>
+            <div class="field"><label for="inv_rd">Reksa dana</label>
+              <div class="inp"><span class="pre">Rp</span><input id="inv_rd" data-kind="rp" inputmode="numeric" autocomplete="off"></div>
+              <span class="hint">Nilai berdasarkan NAB terakhir di Bibit, Bareksa, dan sejenisnya. <em>Contoh: 25.000.000</em></span></div>
+            <div class="field"><label for="inv_sukuk">Sukuk dan obligasi</label>
+              <div class="inp"><span class="pre">Rp</span><input id="inv_sukuk" data-kind="rp" inputmode="numeric" autocomplete="off"></div>
+              <span class="hint">SBR, ST, ORI, sukuk korporasi. <em>Contoh: 10.000.000</em></span></div>
+          </div>
+        </div>
+
+        <div class="cat">
+          <div class="cat-head"><h3>Piutang lancar</h3><span class="sub num" id="sub_piu">Rp0</span></div>
+          <div class="fields">
+            <div class="field"><label for="piu">Piutang yang hampir pasti kembali</label>
+              <div class="inp"><span class="pre">Rp</span><input id="piu" data-kind="rp" inputmode="numeric" autocomplete="off"></div>
+              <span class="hint">Uang yang Anda pinjamkan dan peminjamnya mampu serta mau membayar. Piutang macet tidak dimasukkan. <em>Contoh: 5.000.000</em></span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Pengurang -->
+      <section class="step">
+        <div class="step-head"><span class="step-n">3</span><div><h2>Pengurang</h2><p>Dua hal ini mengurangi harta sebelum dibandingkan dengan nisab.</p></div></div>
+        <div class="fields">
+          <div class="field minus"><label for="utang">Utang jatuh tempo 12 bulan ke depan</label>
+            <div class="inp"><span class="pre">Rp</span><input id="utang" data-kind="rp" inputmode="numeric" autocomplete="off"></div>
+            <span class="hint">Cicilan KPR, kendaraan, dan pinjaman untuk 12 bulan ke depan, bukan seluruh sisa pokok. <em>Contoh: cicilan Rp2 juta × 12 = 24.000.000</em></span></div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="gajiOn" checked>
+          <span>Kurangi tabungan dari gaji yang sudah dipotong zakat penghasilan
+          <small>Aktif secara bawaan agar tidak terjadi zakat ganda dalam setahun. Sebagian ulama berpendapat tabungan dari gaji yang sudah dizakati baru mulai haul sejak diterima. Banyak lembaga zakat tetap menghitung seluruh saldo. Matikan pilihan ini jika Anda mengikuti pendapat tersebut.</small></span></label>
+        <div class="fields" id="gajiWrap">
+          <div class="field minus"><label for="gaji">Tabungan dari gaji 12 bulan terakhir</label>
+            <div class="inp"><span class="pre">Rp</span><input id="gaji" data-kind="rp" inputmode="numeric" autocomplete="off"></div>
+            <span class="hint">Perkiraan bagian saldo kas yang berasal dari gaji setahun terakhir yang sudah dipotong zakat penghasilan. Tidak bisa melebihi total kas dan tabungan. <em>Contoh: menabung Rp5 juta per bulan × 12 = 60.000.000</em></span></div>
+        </div>
+      </section>
+
+      <!-- 4. Haul -->
+      <section class="step">
+        <div class="step-head"><span class="step-n">4</span><div><h2>Haul</h2><p>Zakat mal wajib setelah harta mencapai nisab dan tersimpan genap satu tahun hijriah (sekitar 354 hari).</p></div></div>
+        <label class="toggle"><input type="checkbox" id="haul"> <span>Harta saya sudah mencapai nisab dan tersimpan genap satu tahun hijriah.</span></label>
+      </section>
+    </form>
+
+    <aside class="result" aria-live="polite">
+      <span class="status no" id="statusPill">Belum wajib</span>
+      <div class="big"><span>Zakat mal yang perlu dibayar</span><b class="num" id="zakatOut">Rp0</b></div>
+      <p class="reason" id="reason">Isi nilai harta Anda di sebelah kiri. Hasil akan berubah langsung.</p>
+      <div class="meter">
+        <div class="bar" id="bar" role="img"><i id="barFill" style="width:0%"></i><span class="tick" id="barTick" style="left:87%"></span></div>
+        <div class="meter-legend"><span>Harta bersih <b class="num" id="bersihMini">Rp0</b></span><span class="g">Nisab</span></div>
+      </div>
+      <table class="rinci" id="rinci"></table>
+      <div class="timer" id="timerBox"><span>Waktu pengisian</span><b class="num" id="timer">00:00</b></div>
+    </aside>
+  </div>
+
+  <details class="basis">
+    <summary>Asumsi perhitungan</summary>
+    <ul>
+      <li>Nisab 85 gram emas dengan harga buyback Antam, mengikuti panduan zakat emas BAZNAS. Tarif 2,5% dari harta bersih.</li>
+      <li>Kas, emas, perak, investasi, dan piutang lancar digabung dalam satu nisab. Investasi memakai nilai pasar saat haul.</li>
+      <li>Perhiasan yang dipakai wajar, rumah tinggal, kendaraan pribadi, dan perabot tidak dihitung.</li>
+      <li>Utang yang dikurangkan hanya yang jatuh tempo dalam 12 bulan ke depan.</li>
+      <li>Tabungan dari gaji yang sudah dipotong zakat penghasilan dikurangkan secara bawaan untuk menghindari zakat ganda dalam setahun. Bagian ini dizakati pada haul berikutnya. Pilihan ini bisa dimatikan.</li>
+      <li>Aset usaha, kripto, zakat penghasilan, pertanian, dan peternakan belum dicakup di versi ini.</li>
+    </ul>
+  </details>
+  <p class="foot">Prototipe alat bantu hitung, bukan fatwa. Semua hitungan berjalan di browser Anda dan tidak ada data yang dikirim atau disimpan. Untuk kasus yang tidak biasa, konsultasikan dengan amil atau lembaga zakat resmi.</p>
+</div>
+
+<script>
+(function(){
+  var HARGA_DEFAULT = 2365000, TGL_DEFAULT = '2026-10-22', NISAB_G = 85, RATE = 0.025;
+  var $ = function(id){ return document.getElementById(id); };
+  var fmt = function(n){ return 'Rp' + Math.round(n).toLocaleString('id-ID'); };
+  var fmtNum = function(n){ return Math.round(n).toLocaleString('id-ID'); };
+  var parseRp = function(s){ var d = String(s||'').replace(/\D/g,''); return d ? Number(d) : 0; };
+  var parseG = function(s){ var n = parseFloat(String(s||'').replace(',', '.').replace(/[^\d.]/g,'')); return isFinite(n) ? n : 0; };
+  var BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  var tglLabel = function(iso){ if(!iso) return 'tanggal belum diisi'; var p = iso.split('-'); return (+p[2]) + ' ' + BULAN[+p[1]-1] + ' ' + p[0]; };
+
+  var RP_IDS = ['harga','kas_tab','kas_ew','perak','inv_saham','inv_rd','inv_sukuk','piu','utang','gaji'];
+  var val = function(id){ var el = $(id); return el.dataset.kind === 'g' ? parseG(el.value) : parseRp(el.value); };
+  var setRp = function(id, n){ $(id).value = n ? fmtNum(n) : ''; };
+
+  function compute(){
+    var harga = val('harga');
+    var nisab = NISAB_G * harga;
+    var kas = val('kas_tab') + val('kas_ew');
+    var emas = val('emas_g') * harga + val('perak');
+    var inv = val('inv_saham') + val('inv_rd') + val('inv_sukuk');
+    var piu = val('piu');
+    var total = kas + emas + inv + piu;
+    var utang = val('utang');
+    var gajiOn = $('gajiOn').checked;
+    var gajiIn = gajiOn ? val('gaji') : 0;
+    var gaji = Math.min(gajiIn, kas);           // tidak bisa melebihi kas
+    var bersih = Math.max(0, total - utang - gaji);
+    var capai = harga > 0 && bersih >= nisab && bersih > 0;
+    var haul = $('haul').checked;
+    var wajib = capai && haul;
+    return {harga:harga, nisab:nisab, kas:kas, emas:emas, inv:inv, piu:piu, total:total, utang:utang,
+            gajiOn:gajiOn, gaji:gaji, gajiCapped:gajiIn > kas, bersih:bersih, capai:capai, haul:haul, wajib:wajib,
+            zakat: wajib ? bersih * RATE : 0};
+  }
+
+  function render(){
+    var r = compute();
+    $('nisabOut').textContent = fmt(r.nisab);
+    $('sub_kas').textContent = fmt(r.kas);
+    $('sub_emas').textContent = fmt(r.emas);
+    $('sub_inv').textContent = fmt(r.inv);
+    $('sub_piu').textContent = fmt(r.piu);
+    $('gajiWrap').hidden = !r.gajiOn;
+    $('zakatOut').textContent = fmt(r.zakat);
+    $('bersihMini').textContent = fmt(r.bersih);
+
+    var nisabTxt = fmt(r.nisab) + ' (85 gram × ' + fmt(r.harga) + ', harga buyback Antam ' + tglLabel($('tglHarga').value) + ')';
+    var label, cls, reason;
+    if(r.harga <= 0){
+      label = 'Isi harga emas'; cls = 'wait';
+      reason = 'Isi harga buyback emas di langkah 1 agar nisab bisa dihitung.';
+    } else if(r.total <= 0){
+      label = 'Belum ada data'; cls = 'no';
+      reason = 'Isi nilai harta Anda di langkah 2. Hasil akan berubah langsung.';
+    } else if(r.wajib){
+      label = 'Wajib zakat'; cls = 'ok';
+      reason = 'Harta bersih Anda <b>' + fmt(r.bersih) + '</b> sudah melewati nisab ' + nisabTxt + ' dan sudah haul. Karena itu zakat = 2,5% × ' + fmt(r.bersih) + ' = <b>' + fmt(r.zakat) + '</b>.';
+    } else if(r.capai){
+      label = 'Belum haul'; cls = 'wait';
+      reason = 'Harta bersih Anda <b>' + fmt(r.bersih) + '</b> sudah mencapai nisab ' + nisabTxt + ', tetapi belum tersimpan genap satu tahun hijriah. Zakat mal belum wajib sekarang. Perkiraan zakat saat haul tiba: <b>' + fmt(r.bersih * RATE) + '</b>.';
+    } else {
+      label = 'Belum wajib'; cls = 'no';
+      reason = 'Harta bersih Anda <b>' + fmt(r.bersih) + '</b> masih kurang <b>' + fmt(r.nisab - r.bersih) + '</b> dari nisab ' + nisabTxt + '. Zakat mal belum wajib. Sedekah tetap dianjurkan.';
+    }
+    if(r.gajiOn && r.gaji > 0 && r.harga > 0){
+      reason += ' Tabungan dari gaji sebesar ' + fmt(r.gaji) + ' tidak dihitung tahun ini karena sudah dipotong zakat penghasilan; bagian ini dizakati pada haul berikutnya.';
+    }
+    if(r.gajiCapped){ reason += ' Catatan: tabungan dari gaji yang Anda isi melebihi total kas, jadi dibatasi sebesar total kas.'; }
+    $('statusPill').textContent = label; $('statusPill').className = 'status ' + cls;
+    $('reason').innerHTML = reason;
+
+    var scale = Math.max(r.bersih, r.nisab, 1) * 1.15;
+    $('barFill').style.width = Math.min(100, r.bersih / scale * 100) + '%';
+    $('barTick').style.left = Math.min(100, r.nisab / scale * 100) + '%';
+    $('bar').setAttribute('aria-label', 'Harta bersih ' + fmt(r.bersih) + ' dibanding nisab ' + fmt(r.nisab));
+
+    var rows = [['Kas dan tabungan', r.kas], ['Emas dan perak', r.emas], ['Investasi', r.inv], ['Piutang lancar', r.piu]];
+    var h = rows.map(function(x){ return '<tr' + (x[1] ? '' : ' class="mute"') + '><td>' + x[0] + '</td><td class="num">' + fmt(x[1]) + '</td></tr>'; }).join('');
+    h += '<tr class="minus"><td>Utang jatuh tempo</td><td class="num">−' + fmt(r.utang) + '</td></tr>';
+    h += '<tr class="minus sep"><td>Tabungan dari gaji' + (r.gajiOn ? '' : ' (nonaktif)') + '</td><td class="num">−' + fmt(r.gaji) + '</td></tr>';
+    h += '<tr class="sum"><td>Harta bersih</td><td class="num">' + fmt(r.bersih) + '</td></tr>';
+    h += '<tr><td>Nisab</td><td class="num">' + fmt(r.nisab) + '</td></tr>';
+    h += '<tr class="sum"><td>Zakat 2,5%</td><td class="num">' + fmt(r.zakat) + '</td></tr>';
+    $('rinci').innerHTML = h;
+  }
+
+  // Penghitung waktu pengisian, untuk menguji target di bawah 10 menit
+  var start = null, tick = null;
+  function startTimer(){
+    if(start) return;
+    start = Date.now();
+    tick = setInterval(function(){
+      var s = Math.floor((Date.now() - start) / 1000);
+      $('timer').textContent = String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+      $('timerBox').classList.toggle('over', s >= 600);
+    }, 1000);
+  }
+  function resetTimer(){ clearInterval(tick); start = null; $('timer').textContent = '00:00'; $('timerBox').classList.remove('over'); }
+
+  $('form').addEventListener('input', function(e){
+    var el = e.target;
+    if(el.dataset.kind === 'rp'){ var n = parseRp(el.value); el.value = n ? fmtNum(n) : ''; }
+    if(el.dataset.kind === 'g'){ el.value = el.value.replace(/[^\d.,]/g,''); }
+    startTimer(); render();
+  });
+  $('form').addEventListener('change', render);
+  $('form').addEventListener('submit', function(e){ e.preventDefault(); });
+
+  function reset(){
+    RP_IDS.forEach(function(id){ $(id).value = ''; });
+    $('emas_g').value = '';
+    setRp('harga', HARGA_DEFAULT);
+    $('tglHarga').value = TGL_DEFAULT;
+    $('gajiOn').checked = true;
+    $('haul').checked = false;
+    resetTimer(); render();
+  }
+  $('btnReset').addEventListener('click', reset);
+  $('btnSample').addEventListener('click', function(){
+    reset();
+    var s = {kas_tab:165000000, kas_ew:3500000, perak:0, inv_saham:38000000, inv_rd:25000000, inv_sukuk:10000000, piu:5000000, utang:24000000, gaji:60000000};
+    Object.keys(s).forEach(function(k){ setRp(k, s[k]); });
+    $('emas_g').value = '20';
+    $('haul').checked = true;
+    render();
+  });
+
+  reset();
+})();
+</script>
+</body>
+</html>
