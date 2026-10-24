@@ -210,6 +210,13 @@ details.basis ul{margin:10px 0 0;padding-left:20px;color:var(--soft);font-size:1
             <div><label for="kas">Kas dan tabungan</label><span class="hint">Semua rekening, deposito, e-wallet, dan uang tunai. Tanpa bunga bank.</span></div>
             <div class="field"><div class="box"><span class="pre">Rp</span><input id="kas" data-kind="rp" placeholder="40jt + 25jt + 1,5jt"></div><span class="parsed" id="p_kas"></span></div>
           </div>
+          <label class="switch"><input type="checkbox" id="gajiOn" checked><span class="track"></span>
+            <span><b>Sebagian kas ini dari gaji yang sudah dizakati</b>
+            <small>Aktif agar tidak terjadi zakat ganda dalam setahun. Sebagian ulama berpendapat tabungan dari gaji yang sudah dipotong zakat penghasilan baru mulai haul sejak diterima. Banyak lembaga zakat tetap menghitung seluruh saldo. Matikan jika Anda mengikuti pendapat itu.</small></span></label>
+          <div class="row minus" id="gajiRow">
+            <div><label for="gaji">Tabungan dari gaji 12 bulan terakhir</label><span class="hint">Perkiraan bagian kas di atas yang berasal dari sisa gaji setahun terakhir, setelah dipotong zakat penghasilan dan cicilan. Paling banyak sebesar kas dan tabungan.</span></div>
+            <div class="field"><div class="box"><span class="pre">Rp</span><input id="gaji" data-kind="rp" placeholder="5jt x 12"></div><span class="parsed" id="p_gaji"></span></div>
+          </div>
           <div class="row">
             <div><label for="emas">Emas simpanan</label><span class="hint">Batangan, tabungan emas, perhiasan yang disimpan. Dinilai dengan harga di atas.</span></div>
             <div class="field"><div class="box"><input id="emas" class="pl" data-kind="g" inputmode="decimal" placeholder="20"><span class="post">gram</span></div><span class="parsed" id="p_emas"></span></div>
@@ -232,18 +239,11 @@ details.basis ul{margin:10px 0 0;padding-left:20px;color:var(--soft);font-size:1
 
       <section class="group">
         <h2>Yang mengurangi</h2>
-        <p>Dua hal ini dikurangkan sebelum harta dibandingkan dengan nisab.</p>
+        <p>Dikurangkan sebelum harta dibandingkan dengan nisab.</p>
         <div class="rows">
           <div class="row minus">
-            <div><label for="utang">Utang jatuh tempo 12 bulan</label><span class="hint">Cicilan KPR, kendaraan, dan pinjaman untuk 12 bulan ke depan, bukan seluruh sisa pokok.</span></div>
-            <div class="field"><div class="box"><span class="pre">Rp</span><input id="utang" data-kind="rp" placeholder="2jt x 12"></div><span class="parsed" id="p_utang"></span></div>
-          </div>
-          <label class="switch"><input type="checkbox" id="gajiOn" checked><span class="track"></span>
-            <span><b>Kurangi tabungan dari gaji yang sudah dizakati</b>
-            <small>Aktif agar tidak terjadi zakat ganda dalam setahun. Sebagian ulama berpendapat tabungan dari gaji yang sudah dipotong zakat penghasilan baru mulai haul sejak diterima. Banyak lembaga zakat tetap menghitung seluruh saldo. Matikan jika Anda mengikuti pendapat itu.</small></span></label>
-          <div class="row minus" id="gajiRow">
-            <div><label for="gaji">Tabungan dari gaji 12 bulan terakhir</label><span class="hint">Perkiraan bagian saldo kas yang berasal dari gaji setahun terakhir. Paling banyak sebesar kas dan tabungan.</span></div>
-            <div class="field"><div class="box"><span class="pre">Rp</span><input id="gaji" data-kind="rp" placeholder="5jt x 12"></div><span class="parsed" id="p_gaji"></span></div>
+            <div><label for="utang">Utang yang dibayar dari tabungan</label><span class="hint">Cicilan KPR atau kendaraan yang dipotong otomatis dari gaji tidak perlu dimasukkan. Isi hanya tunggakan atau utang yang akan dilunasi dari tabungan, misalnya pelunasan dipercepat.</span></div>
+            <div class="field"><div class="box"><span class="pre">Rp</span><input id="utang" data-kind="rp" placeholder="Kosongkan jika tidak ada"></div><span class="parsed" id="p_utang"></span></div>
           </div>
         </div>
       </section>
@@ -262,7 +262,7 @@ details.basis ul{margin:10px 0 0;padding-left:20px;color:var(--soft);font-size:1
         <ul>
           <li>Nisab 85 gram emas dengan harga buyback Antam, mengikuti panduan zakat emas BAZNAS. Tarif 2,5% dari harta bersih.</li>
           <li>Kas, emas, perak, investasi, dan piutang lancar digabung dalam satu nisab.</li>
-          <li>Utang yang dikurangkan hanya yang jatuh tempo dalam 12 bulan ke depan.</li>
+          <li>Utang dikurangkan hanya jika dibayar dari harta yang ada sekarang. Cicilan yang dipotong otomatis dari gaji tidak dikurangkan, karena tabungan saat haul sudah merupakan sisa setelah cicilan.</li>
           <li>Tabungan dari gaji yang sudah dipotong zakat penghasilan dikurangkan secara bawaan dan dizakati pada haul berikutnya.</li>
           <li>Aset usaha, kripto, dan zakat penghasilan belum dicakup di versi ini.</li>
         </ul>
@@ -391,7 +391,7 @@ details.basis ul{margin:10px 0 0;padding-left:20px;color:var(--soft);font-size:1
     f += '<span>Emas dan perak</span><span>' + rp(emas + vals.perak) + '</span>';
     f += '<span>Investasi</span><span>' + rp(vals.inv) + '</span>';
     f += '<span>Piutang lancar</span><span>' + rp(vals.piu) + '</span>';
-    f += '<span>Utang 12 bulan</span><span class="m">−' + rp(vals.utang) + '</span>';
+    f += '<span>Utang dari tabungan</span><span class="m">−' + rp(vals.utang) + '</span>';
     f += '<span>Tabungan dari gaji</span><span class="m">−' + rp(gaji) + '</span>';
     f += '<span>Harta bersih</span><span>' + rp(bersih) + '</span>';
     f += '<span>Nisab</span><span class="g">' + rp(nisab) + '</span>';
@@ -441,7 +441,6 @@ details.basis ul{margin:10px 0 0;padding-left:20px;color:var(--soft);font-size:1
     $('emas').value = '20';
     $('inv').value = '38jt + 25jt + 10jt';
     $('piu').value = '5jt';
-    $('utang').value = '2jt x 12';
     $('gaji').value = '5jt x 12';
     $('haul').checked = true;
     render();
