@@ -11,12 +11,12 @@ Buka `index.html` langsung di browser. Tidak perlu instalasi, framework, atau da
 1. Form 4 jenis harta (kas dan tabungan, emas dan perak simpanan, investasi, piutang lancar) dengan keterangan dan contoh
 2. Pengurang: tabungan dari gaji yang sudah dipotong zakat penghasilan (aktif secara bawaan, bisa dimatikan), dan utang yang dibayar dari tabungan
 3. Harga buyback emas Antam per gram + tanggal harga, nisab = 85 gram x harga
-4. Konfirmasi haul
-5. Hasil: status (wajib, belum haul, belum wajib), zakat 2,5%, rincian, dan kalimat alasan
-6. Penghitung waktu pengisian untuk uji target di bawah 10 menit
+4. Hasil: status (wajib atau belum wajib), zakat 2,5%, rincian, dan kalimat alasan
+5. Penghitung waktu pengisian untuk uji target di bawah 10 menit
 
 ## Asumsi perhitungan
 
+- Pengguna membuka kalkulator saat haul tiba, jadi harta dianggap sudah tersimpan genap satu tahun hijriah
 - Nisab 85 gram emas dengan harga buyback Antam, mengikuti panduan zakat emas BAZNAS
 - Perhiasan yang dipakai wajar, rumah tinggal, kendaraan pribadi, dan perabot tidak dihitung
 - Utang dikurangkan hanya jika dibayar dari harta yang ada sekarang. Cicilan yang dipotong otomatis dari gaji tidak dikurangkan karena tabungan saat haul sudah merupakan sisa setelah cicilan

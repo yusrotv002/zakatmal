@@ -79,6 +79,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(32px,4.2vw,48px);l
 .legend .lf{background:var(--emerald)}
 .legend .lc{background:repeating-linear-gradient(135deg,var(--minus) 0 2px,transparent 2px 5px);opacity:.8;outline:1px solid var(--line)}
 .legend .ln{height:0;width:14px;border-top:2.5px solid var(--gold);border-radius:0}
+.amount small.assume{margin:8px 0 0;font-size:12px}
 .reason{margin:0;font-size:14px;line-height:1.6;color:var(--ink)}
 .reason strong{font-weight:700}
 .figures{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13.5px;border-top:1px solid var(--line);padding-top:12px}
@@ -156,6 +157,7 @@ details.basis ul{margin:10px 0 0;padding-left:20px;color:var(--soft);font-size:1
     <div>
       <h1>Zakat mal Anda,<br>ditimbang dengan nisab.</h1>
       <p class="lede">Isi harta Anda, dan kolom di samping naik menuju garis nisab. Boleh menulis seperti 40jt + 25jt untuk menjumlah beberapa rekening sekaligus.</p>
+      <p class="lede">Pakai kalkulator ini saat haul Anda tiba, yaitu genap setahun hijriah sejak harta mencapai nisab.</p>
     </div>
     <div class="head-btns">
       <button type="button" class="ghost" id="btnSample">Coba dengan contoh</button>
@@ -174,7 +176,7 @@ details.basis ul{margin:10px 0 0;padding-left:20px;color:var(--soft);font-size:1
       </div>
       <div class="readout">
         <span class="chip" id="chip">Belum ada data</span>
-        <div class="amount"><small>Zakat mal yang perlu dibayar</small><b id="zakat">Rp0</b></div>
+        <div class="amount"><small>Zakat mal yang perlu dibayar</small><b id="zakat">Rp0</b><small class="assume">Dengan asumsi harta Anda sudah tersimpan setahun (haul).</small></div>
         <p class="reason" id="reason">Mulai dari kas dan tabungan. Hasil berubah setiap Anda mengetik.</p>
         <div class="legend"><span><i class="lf"></i>Harta bersih</span><span><i class="lc"></i>Dikurangi</span><span><i class="ln"></i>Nisab</span></div>
         <details class="more">
@@ -248,19 +250,11 @@ details.basis ul{margin:10px 0 0;padding-left:20px;color:var(--soft);font-size:1
         </div>
       </section>
 
-      <section class="group">
-        <h2>Haul</h2>
-        <div class="rows">
-          <label class="switch"><input type="checkbox" id="haul"><span class="track"></span>
-            <span><b>Harta saya sudah mencapai nisab selama setahun</b>
-            <small>Zakat mal wajib setelah harta mencapai nisab dan tersimpan genap satu tahun hijriah, sekitar 354 hari.</small></span></label>
-        </div>
-      </section>
-
       <details class="basis">
         <summary>Dasar perhitungan</summary>
         <ul>
           <li>Nisab 85 gram emas dengan harga buyback Antam, mengikuti panduan zakat emas BAZNAS. Tarif 2,5% dari harta bersih.</li>
+          <li>Harta dianggap sudah haul, yaitu sudah mencapai nisab dan tersimpan genap satu tahun hijriah (sekitar 354 hari). Jika belum, tunggu sampai haul tiba sebelum membayar.</li>
           <li>Kas, emas, perak, investasi, dan piutang lancar digabung dalam satu nisab.</li>
           <li>Utang dikurangkan hanya jika dibayar dari harta yang ada sekarang. Cicilan yang dipotong otomatis dari gaji tidak dikurangkan, karena tabungan saat haul sudah merupakan sisa setelah cicilan.</li>
           <li>Tabungan dari gaji yang sudah dipotong zakat penghasilan dikurangkan secara bawaan dan dizakati pada haul berikutnya.</li>
@@ -347,8 +341,7 @@ details.basis ul{margin:10px 0 0;padding-left:20px;color:var(--soft);font-size:1
     var pengurang = Math.min(bruto, vals.utang + gaji);
     var bersih = Math.max(0, bruto - vals.utang - gaji);
     var capai = harga > 0 && bersih > 0 && bersih >= nisab;
-    var haul = $('haul').checked;
-    var wajib = capai && haul;
+    var wajib = capai;
     var zakat = wajib ? bersih * RATE : 0;
 
     $('gajiRow').hidden = !gajiOn;
@@ -375,9 +368,7 @@ details.basis ul{margin:10px 0 0;padding-left:20px;color:var(--soft);font-size:1
     if(harga <= 0){ label = 'Isi harga emas'; cls = 'wait'; reason = 'Isi harga buyback emas per gram agar nisab bisa dihitung.'; }
     else if(bruto <= 0){ label = 'Belum ada data'; reason = 'Mulai dari kas dan tabungan. Hasil berubah setiap Anda mengetik.'; }
     else if(wajib){ label = 'Wajib zakat'; cls = 'ok';
-      reason = 'Harta bersih Anda <strong>' + rp(bersih) + '</strong> sudah melewati nisab ' + rp(nisab) + ' dan sudah haul. Zakatnya 2,5% × ' + rp(bersih) + ' = <strong>' + rp(zakat) + '</strong>.'; }
-    else if(capai){ label = 'Belum haul'; cls = 'wait';
-      reason = 'Harta bersih Anda <strong>' + rp(bersih) + '</strong> sudah mencapai nisab, tetapi belum tersimpan setahun. Saat haul tiba, perkiraan zakatnya <strong>' + rp(bersih * RATE) + '</strong>.'; }
+      reason = 'Harta bersih Anda <strong>' + rp(bersih) + '</strong> sudah melewati nisab ' + rp(nisab) + '. Zakatnya 2,5% × ' + rp(bersih) + ' = <strong>' + rp(zakat) + '</strong>.'; }
     else { label = 'Belum wajib';
       reason = 'Harta bersih Anda <strong>' + rp(bersih) + '</strong>, masih kurang <strong>' + rp(nisab - bersih) + '</strong> dari nisab. Zakat mal belum wajib. Sedekah tetap dianjurkan.'; }
     if(gajiOn && gaji > 0 && harga > 0 && bruto > 0){ reason += ' Tabungan dari gaji ' + rp(gaji) + ' tidak dihitung tahun ini karena sudah dipotong zakat penghasilan.'; }
@@ -431,7 +422,7 @@ details.basis ul{margin:10px 0 0;padding-left:20px;color:var(--soft);font-size:1
     $('emas').value = '';
     $('harga').value = HARGA_DEFAULT.toLocaleString('id-ID');
     $('tgl').value = TGL_DEFAULT;
-    $('gajiOn').checked = true; $('haul').checked = false;
+    $('gajiOn').checked = true;
     wasOver = false; stopTimer(); render();
   }
   $('btnReset').addEventListener('click', reset);
@@ -442,7 +433,6 @@ details.basis ul{margin:10px 0 0;padding-left:20px;color:var(--soft);font-size:1
     $('inv').value = '38jt + 25jt + 10jt';
     $('piu').value = '5jt';
     $('gaji').value = '5jt x 12';
-    $('haul').checked = true;
     render();
   });
 
